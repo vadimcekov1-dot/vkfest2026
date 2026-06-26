@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VK Fest Matcher</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #ffffff);
+            --text-color: var(--tg-theme-text-color, #000000);
+            --hint-color: var(--tg-theme-hint-color, #999999);
+            --button-color: var(--tg-theme-button-color, #2481cc);
+            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #efeff4);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            user-select: none;
+        }
+        .card {
+            background: var(--secondary-bg);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        h2 { margin-top: 0; font-size: 22px; }
+        .artist-title { font-size: 26px; font-weight: 800; margin: 30px 0; color: var(--button-color); }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            margin: 16px 0;
+            border-radius: 10px;
+            border: 1px solid var(--hint-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .btn {
+            background-color: var(--button-color);
+            color: var(--button-text-color);
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+        }
+        .btn-group { display: flex; gap: 12px; width: 100%; margin-top: 20px; }
+        .btn-yes { background-color: #34c759; color: white; }
+        .btn-no { background-color: #ff3b30; color: white; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-start" class="card">
+        <h2>Кто ты, воин? 🐺</h2>
+        <p style="color: var(--hint-color);">Введи свое настоящее имя, чтобы друзья поняли, кто совпал с ними по вкусам.</p>
+        <input type="text" id="user-name" class="input-field" placeholder="Например, Саня">
+        <button class="btn" onclick="startVoting()">Погнали</button>
+    </div>
+
+    <div id="screen-vote" class="card hidden">
+        <p style="color: var(--hint-color); margin: 0;">Идешь на выступление?</p>
+        <div id="artist-name" class="artist-title">Загрузка...</div>
+        <div class="btn-group">
+            <button class="btn btn-no" onclick="handleVote('no')">👎 Пропущу</button>
+            <button class="btn btn-yes" onclick="handleVote('yes')">👍 Иду!</button>
+        </div>
+    </div>
+
+    <div id="screen-end" class="card hidden">
+        <h2 style="color: #34c759;">Готово! 🎉</h2>
+        <p>Ты отметил всех артистов. Твои предпочтения улетели в базу данных.</p>
+        <p style="color: var(--hint-color);">Теперь можешь закрыть это окно и использовать команду <b>/match</b> в чате бота.</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть окно на максимум
+
+        // Список артистов. Ты можешь менять его прямо здесь:
+        const artists = [
+            "Big Baby Tape", 
+            "Toxi$", 
+            "Дора", 
+            "Boulevard Depo", 
+            "Markul", 
+            "GONE.Fludd", 
+            "FEDUK",
+            "Mona",
+            "L'One"
+        ];
+        
+        let currentIndex = 0;
+        let userChoices = {};
+        let registeredName = "";
+
+        function startVoting() {
+            const nameInput = document.getElementById('user-name').value.trim();
+            if (!nameInput) {
+                alert("Пожалуйста, напиши имя!");
+                return;
+            }
+            registeredName = nameInput;
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-vote').classList.remove('hidden');
+            renderArtist();
+        }
+
+        function renderArtist() {
+            if (currentIndex < artists.length) {
+                document.getElementById('artist-name').innerText = artists[currentIndex];
+            } else {
+                finishVoting();
+            }
+        }
+
+        function handleVote(decision) {
+            const currentArtist = artists[currentIndex];
+            userChoices[currentArtist] = decision;
+            currentIndex++;
+            renderArtist();
+        }
+
+        function finishVoting() {
+            document.getElementById('screen-vote').classList.add('hidden');
+            document.getElementById('screen-end').classList.remove('hidden');
+
+            // Упаковываем данные и отправляем их назад в Бот через API Telegram
+            const finalData = {
+                name: registeredName,
+                votes: userChoices
+            };
+            tg.sendData(JSON.stringify(finalData));
+        }
+    </script>
+</body>
+</html>

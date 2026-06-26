@@ -3,153 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VK Fest Matcher</title>
+    <title>VK Fest 2026 Matcher</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #ffffff);
-            --text-color: var(--tg-theme-text-color, #000000);
-            --hint-color: var(--tg-theme-hint-color, #999999);
-            --button-color: var(--tg-theme-button-color, #2481cc);
-            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #efeff4);
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --vk-blue: #0077ff;
+            --card-bg: #f5f7fa;
+            --btn-yes: #22c55e;
+            --btn-maybe: #eab308;
+            --btn-no: #ef4444;
         }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--vk-blue);
             color: var(--text-color);
             margin: 0;
-            padding: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 90vh;
+            min-height: 100vh;
+            overflow: hidden;
             user-select: none;
         }
-        .card {
-            background: var(--secondary-bg);
-            border-radius: 16px;
-            padding: 24px;
+
+        .main-wrapper {
             width: 100%;
-            max-width: 320px;
+            max-width: 380px;
+            background: white;
+            border-radius: 28px;
+            padding: 16px;
             box-sizing: border-box;
-            text-align: center;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 24px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
         }
-        h2 { margin-top: 0; font-size: 22px; }
-        .artist-title { font-size: 26px; font-weight: 800; margin: 30px 0; color: var(--button-color); }
-        .input-field {
-            width: 100%;
-            padding: 12px;
-            margin: 16px 0;
-            border-radius: 10px;
-            border: 1px solid var(--hint-color);
-            background: var(--bg-color);
-            color: var(--text-color);
-            box-sizing: border-box;
+
+        /* Шапка с фильтрами в стиле оригинального сайта */
+        .header-filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-text {
+            color: var(--vk-blue);
             font-size: 16px;
+            font-weight: 900;
         }
-        .btn {
-            background-color: var(--button-color);
-            color: var(--button-text-color);
+
+        .filter-select {
             border: none;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
+            background: #f0f2f5;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 11px;
+            color: #000;
+            outline: none;
             cursor: pointer;
         }
-        .btn-group { display: flex; gap: 12px; width: 100%; margin-top: 20px; }
-        .btn-yes { background-color: #34c759; color: white; }
-        .btn-no { background-color: #ff3b30; color: white; }
-        .hidden { display: none; }
+
+        /* Контейнер для карточек */
+        .card-deck {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            margin-bottom: 16px;
+            height: 380px;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            transform-origin: center bottom;
+        }
+
+        /* Эффект стопки */
+        .card:nth-last-child(1) { transform: scale(1) translateY(0); z-index: 3; }
+        .card:nth-last-child(2) { transform: scale(0.95) translateY(12px); z-index: 2; opacity: 0.8; }
+        .card:nth-last-child(3) { transform: scale(0.9) translateY(24px); z-index: 1; opacity: 0.4; }
+        .card:nth-last-child(n+4) { display: none; }
+
+        /* Анимации свайпов */
+        .card.swipe-yes { transform: translate(150%, -20px) rotate(20deg) !important; opacity: 0; }
+        .card.swipe-no { transform: translate(-150%, -20px) rotate(-20deg) !important; opacity: 0; }
+        .card.swipe-maybe { transform: translate(0, -150%) scale(0.8) !important; opacity: 0; }
+
+        .card-image {
+            width: 100%;
+            height: 75%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .scene-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--vk-blue);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .card-info {
+            padding: 12px;
+            text-align: center;
+            background: white;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .artist-name {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+        }
+
+        .artist-tag {
+            font-size: 12px;
+            color: #65676b;
+            margin: 0;
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            color: white;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-no { background-color: var(--btn-no); }
+        .btn-maybe { background-color: var(--btn-maybe); color: black; }
+        .btn-yes { background-color: var(--btn-yes); }
+
+        /* Экран результатов */
+        .result-screen {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+            height: 100%;
+        }
+
+        .form-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px;
+            border-radius: 12px;
+            border: 2px solid #e4e6eb;
+            font-size: 16px;
+            margin-bottom: 16px;
+            outline: none;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="screen-start" class="card">
-        <h2>Кто ты, воин? 🐺</h2>
-        <p style="color: var(--hint-color);">Введи свое настоящее имя, чтобы друзья поняли, кто совпал с ними по вкусам.</p>
-        <input type="text" id="user-name" class="input-field" placeholder="Например, Саня">
-        <button class="btn" onclick="startVoting()">Погнали</button>
-    </div>
-
-    <div id="screen-vote" class="card hidden">
-        <p style="color: var(--hint-color); margin: 0;">Идешь на выступление?</p>
-        <div id="artist-name" class="artist-title">Загрузка...</div>
-        <div class="btn-group">
-            <button class="btn btn-no" onclick="handleVote('no')">👎 Пропущу</button>
-            <button class="btn btn-yes" onclick="handleVote('yes')">👍 Иду!</button>
+    <div class="main-wrapper">
+        <!-- Шапка с фильтрами -->
+        <div class="header-filters" id="header-nav">
+            <div class="logo-text">VK FEST</div>
+            <div>
+                <select class="filter-select" id="date-select" onchange="filterChanged()">
+                    <option value="18 июля">18 июля</option>
+                    <option value="19 июля">19 июля</option>
+                </select>
+                <select class="filter-select" id="scene-select" onchange="filterChanged()">
+                    <option value="Синяя сцена">Синяя</option>
+                    <option value="Белая сцена">Белая</option>
+                    <option value="Фиолетовая сцена">Фиолетовая</option>
+                </select>
+            </div>
         </div>
-    </div>
 
-    <div id="screen-end" class="card hidden">
-        <h2 style="color: #34c759;">Готово! 🎉</h2>
-        <p>Ты отметил всех артистов. Твои предпочтения улетели в базу данных.</p>
-        <p style="color: var(--hint-color);">Теперь можешь закрыть это окно и использовать команду <b>/match</b> в чате бота.</p>
+        <!-- Игровой экран -->
+        <div class="card-deck" id="deck"></div>
+        <div class="buttons-container" id="controls">
+            <button class="btn btn-no" onclick="vote('no')">❌ МИМО</button>
+            <button class="btn btn-maybe" onclick="vote('maybe')">🤷‍♂️ 50/50</button>
+            <button class="btn btn-yes" onclick="vote('yes')">🔥 ИДУ</button>
+        </div>
+
+        <!-- Финальный экран -->
+        <div class="result-screen" id="result-stage">
+            <h2 style="font-size: 26px; margin-bottom: 8px; font-weight: 800;">🎉 Выбор сделан!</h2>
+            <p style="color: #65676b; margin-bottom: 24px; font-size: 14px;">Введи свое имя, чтобы отправить расписание в чат бота</p>
+            <input type="text" id="username" class="form-input" placeholder="Твое имя">
+            <button class="btn btn-yes" style="width: 100%; background-color: var(--vk-blue);" onclick="sendDataToBot()">Поделиться результатом</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Развернуть окно на максимум
+        tg.expand();
 
-        // Список артистов. Ты можешь менять его прямо здесь:
-        const artists = [
-            "Big Baby Tape", 
-            "Toxi$", 
-            "Дора", 
-            "Boulevard Depo", 
-            "Markul", 
-            "GONE.Fludd", 
-            "FEDUK",
-            "Mona",
-            "L'One"
+        // Полная база артистов со всех твоих скриншотов
+        const allArtists = [
+            // 18 ИЮЛЯ - СИНЯЯ
+            { name: "Секретный гость", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500" },
+            { name: "ZIVERT", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500" },
+            { name: "ДОРА", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500" },
+            { name: "MARKUL", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" },
+            { name: "ТАТЬЯНА КУРТУКОВА", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" },
+            { name: "Aarne & Toxi$ & Big Baby Tape", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" },
+            { name: "ЕВА ПОЛЬНА", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" },
+            { name: "IOWA", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" },
+            { name: "JONY", date: "18 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1487180142328-054b783fc471?w=500" },
+
+            // 18 ИЮЛЯ - БЕЛАЯ
+            { name: "BOULEVARD DEPO", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500" },
+            { name: "ТРАВМА", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=500" },
+            { name: "АК-47 & ТГК", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500" },
+            { name: "ГУДТАЙМС", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500" },
+            { name: "МАРТИН", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500" },
+            { name: "MOREART", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500" },
+            { name: "АНТОХА МС", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" },
+            { name: "LIDA", date: "18 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1482440308425-276ad0f28b19?w=500" },
+
+            // 18 ИЮЛЯ - ФИОЛЕТОВАЯ
+            { name: "НАВЗДОХЕ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=500" },
+            { name: "СЕСТРЁНКА", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500" },
+            { name: "ROZALIA", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500" },
+            { name: "NANSI & SIDOROV", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" },
+            { name: "UGLI", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" },
+            { name: "TESLA BOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500" },
+            { name: "КРИЛИ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500" },
+            { name: "КАТЮША", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" },
+            { name: "OSIWOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" },
+
+            // 19 ИЮЛЯ - СИНЯЯ
+            { name: "Секретный гость", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500" },
+            { name: "ВАДИМ САМОЙЛОВ / АГАТА КРИСТИ", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500" },
+            { name: "T.A.T.U.", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500" },
+            { name: "MONA", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500" },
+            { name: "ICEGERGERT", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" },
+            { name: "PIZZA", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" },
+            { name: "OG BUDA", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500" },
+            { name: "BLIZKEY", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=500" },
+            { name: "XOLIDAYBOY", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500" },
+            { name: "SERYABKINA", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" },
+            { name: "МОТ", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" },
+            { name: "HOLLYFLAME", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500" },
+            { name: "АРТУР ПИРОЖКОВ", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" },
+            { name: "ДЖИГАН", date: "19 июля", scene: "Синяя сцена", img: "https://images.unsplash.com/photo-1482440308425-276ad0f28b19?w=500" },
+
+            // 19 ИЮЛЯ - БЕЛАЯ
+            { name: "ПАЗНЯКС", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=500" },
+            { name: "GONE.Fludd", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500" },
+            { name: "ZVENTA SVENTANA", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=500" },
+            { name: "СЛОВЕТСКИЙ", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" },
+            { name: "ТИМА ИЩЕТ СВЕТ", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500" },
+            { name: "СЛАВА КПСС", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500" },
+            { name: "ПОЛКА", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500" },
+            { name: "SALUKI", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" },
+            { name: "LIL KRYSTALLL", date: "19 июля", scene: "Белая сцена", img: "https://images.unsplash.com/photo-1482440308425-276ad0f28b19?w=500" },
+
+            // 19 ИЮЛЯ - ФИОЛЕТОВАЯ
+            { name: "ХМЫРОВ", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=500" },
+            { name: "АСИЯ", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500" },
+            { name: "CHEESE PEOPLE", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500" },
+            { name: "SKY RAE", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" },
+            { name: "NOMAD PUNK", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" },
+            { name: "ПЛУТТО", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500" },
+            { name: "УЛЬЯНА МАМУШКИНА", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=500" },
+            { name: "ARUSTAMOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" },
+            { name: "CHEBANOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" }
         ];
-        
-        let currentIndex = 0;
-        let userChoices = {};
-        let registeredName = "";
 
-        function startVoting() {
-            const nameInput = document.getElementById('user-name').value.trim();
-            if (!nameInput) {
-                alert("Пожалуйста, напиши имя!");
+        let activeArtists = [];
+        let currentIdx = 0;
+        const totalVotes = { yes: [], maybe: [], no: [] };
+
+        function filterChanged() {
+            const selectedDate = document.getElementById('date-select').value;
+            const selectedScene = document.getElementById('scene-select').value;
+
+            // Сортируем базу под фильтры
+            activeArtists = allArtists.filter(a => a.date === selectedDate && a.scene === selectedScene);
+            currentIdx = 0;
+            
+            // Сбрасываем дисплей стопки, если он скрывался на финальном экране
+            document.getElementById('deck').style.display = 'block';
+            document.getElementById('controls').style.display = 'flex';
+            document.getElementById('result-stage').style.display = 'none';
+
+            renderDeck();
+        }
+
+        function renderDeck() {
+            const deck = document.getElementById('deck');
+            deck.innerHTML = '';
+
+            const cardsToRender = activeArtists.slice(currentIdx, currentIdx + 3);
+
+            if (cardsToRender.length === 0 && currentIdx > 0) {
+                showResultScreen();
+                return;
+            } else if (cardsToRender.length === 0) {
+                deck.innerHTML = '<div style="text-align:center; padding-top:120px; color:#65676b; font-weight:700; font-size:15px;">Список артистов пуст 🤷‍♂️</div>';
+                document.getElementById('controls').style.display = 'none';
                 return;
             }
-            registeredName = nameInput;
-            document.getElementById('screen-start').classList.add('hidden');
-            document.getElementById('screen-vote').classList.remove('hidden');
-            renderArtist();
+
+            // Рендер задом наперед для верного наложения слоев
+            cardsToRender.reverse().forEach((artist) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-image" style="background-image: url('${artist.img}')">
+                        <div class="scene-badge">${artist.scene}</div>
+                    </div>
+                    <div class="card-info">
+                        <h3 class="artist-name">${artist.name}</h3>
+                        <p class="artist-tag">${artist.date}</p>
+                    </div>
+                `;
+                deck.appendChild(card);
+            });
         }
 
-        function renderArtist() {
-            if (currentIndex < artists.length) {
-                document.getElementById('artist-name').innerText = artists[currentIndex];
-            } else {
-                finishVoting();
+        function vote(type) {
+            const deck = document.getElementById('deck');
+            const topCard = deck.lastElementChild;
+            if (!topCard || activeArtists.length === 0) return;
+
+            topCard.classList.add(`swipe-${type}`);
+            
+            const artist = activeArtists[currentIdx];
+            totalVotes[type].push(`${artist.name} (${artist.date}, ${artist.scene})`);
+
+            currentIdx++;
+
+            setTimeout(() => {
+                renderDeck();
+            }, 300);
+        }
+
+        function showResultScreen() {
+            document.getElementById('deck').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('result-stage').style.display = 'block';
+        }
+
+        function sendDataToBot() {
+            const name = document.getElementById('username').value.trim();
+            if (!name) {
+                alert('Введи свое имя!');
+                return;
             }
+
+            let report = `🎫 Мой VK Fest Match\n👤 Пользователь: ${name}\n\n`;
+            if (totalVotes.yes.length) report += `🔥 ИДУ:\n• ${totalVotes.yes.join('\n• ')}\n\n`;
+            if (totalVotes.maybe.length) report += `🤷‍♂️ 50/50:\n• ${totalVotes.maybe.join('\n• ')}\n\n`;
+            if (totalVotes.no.length) report += `❌ МИМО:\n• ${totalVotes.no.join('\n• ')}`;
+
+            tg.sendData(report);
+            tg.close();
         }
 
-        function handleVote(decision) {
-            const currentArtist = artists[currentIndex];
-            userChoices[currentArtist] = decision;
-            currentIndex++;
-            renderArtist();
-        }
-
-        function finishVoting() {
-            document.getElementById('screen-vote').classList.add('hidden');
-            document.getElementById('screen-end').classList.remove('hidden');
-
-            // Упаковываем данные и отправляем их назад в Бот через API Telegram
-            const finalData = {
-                name: registeredName,
-                votes: userChoices
-            };
-            tg.sendData(JSON.stringify(finalData));
-        }
+        // Старт
+        filterChanged();
     </script>
 </body>
 </html>

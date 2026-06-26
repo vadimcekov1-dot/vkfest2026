@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VK Fest 2026 Matcher</title>
+    <title>VK Fest Matcher</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -43,16 +43,13 @@
             box-shadow: 0 15px 30px rgba(0,0,0,0.2);
         }
 
-        /* Шапка с фильтрами в стиле оригинального сайта */
         .header-filters {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .logo-text {
@@ -61,19 +58,16 @@
             font-weight: 900;
         }
 
-        .filter-select {
-            border: none;
+        .current-badge {
             background: #f0f2f5;
-            padding: 6px 8px;
+            padding: 6px 10px;
             border-radius: 8px;
             font-weight: 700;
             font-size: 11px;
             color: #000;
-            outline: none;
-            cursor: pointer;
+            text-transform: uppercase;
         }
 
-        /* Контейнер для карточек */
         .card-deck {
             position: relative;
             width: 100%;
@@ -96,13 +90,11 @@
             transform-origin: center bottom;
         }
 
-        /* Эффект стопки */
         .card:nth-last-child(1) { transform: scale(1) translateY(0); z-index: 3; }
         .card:nth-last-child(2) { transform: scale(0.95) translateY(12px); z-index: 2; opacity: 0.8; }
         .card:nth-last-child(3) { transform: scale(0.9) translateY(24px); z-index: 1; opacity: 0.4; }
         .card:nth-last-child(n+4) { display: none; }
 
-        /* Анимации свайпов */
         .card.swipe-yes { transform: translate(150%, -20px) rotate(20deg) !important; opacity: 0; }
         .card.swipe-no { transform: translate(-150%, -20px) rotate(-20deg) !important; opacity: 0; }
         .card.swipe-maybe { transform: translate(0, -150%) scale(0.8) !important; opacity: 0; }
@@ -173,7 +165,12 @@
         .btn-maybe { background-color: var(--btn-maybe); color: black; }
         .btn-yes { background-color: var(--btn-yes); }
 
-        /* Экран результатов */
+        .finish-block {
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+        }
+
         .result-screen {
             display: none;
             text-align: center;
@@ -197,31 +194,25 @@
 <body>
 
     <div class="main-wrapper">
-        <!-- Шапка с фильтрами -->
         <div class="header-filters" id="header-nav">
             <div class="logo-text">VK FEST</div>
-            <div>
-                <select class="filter-select" id="date-select" onchange="filterChanged()">
-                    <option value="18 июля">18 июля</option>
-                    <option value="19 июля">19 июля</option>
-                </select>
-                <select class="filter-select" id="scene-select" onchange="filterChanged()">
-                    <option value="Синяя сцена">Синяя</option>
-                    <option value="Белая сцена">Белая</option>
-                    <option value="Фиолетовая сцена">Фиолетовая</option>
-                </select>
+            <div class="current-badge" id="status-badge">18 ИЮЛЯ • СИНЯЯ</div>
+        </div>
+
+        <div class="card-deck" id="deck"></div>
+        
+        <div id="game-controls">
+            <div class="buttons-container" id="controls">
+                <button class="btn btn-no" onclick="vote('no')">❌ МИМО</button>
+                <button class="btn btn-maybe" onclick="vote('maybe')">🤷‍♂️ 50/50</button>
+                <button class="btn btn-yes" onclick="vote('yes')">🔥 ИДУ</button>
+            </div>
+            
+            <div class="finish-block" id="finish-now-btn">
+                <button class="btn" style="width:100%; background-color:#828282;" onclick="showResultScreen()">🏁 Закончить досрочно и отправить</button>
             </div>
         </div>
 
-        <!-- Игровой экран -->
-        <div class="card-deck" id="deck"></div>
-        <div class="buttons-container" id="controls">
-            <button class="btn btn-no" onclick="vote('no')">❌ МИМО</button>
-            <button class="btn btn-maybe" onclick="vote('maybe')">🤷‍♂️ 50/50</button>
-            <button class="btn btn-yes" onclick="vote('yes')">🔥 ИДУ</button>
-        </div>
-
-        <!-- Финальный экран -->
         <div class="result-screen" id="result-stage">
             <h2 style="font-size: 26px; margin-bottom: 8px; font-weight: 800;">🎉 Выбор сделан!</h2>
             <p style="color: #65676b; margin-bottom: 24px; font-size: 14px;">Введи свое имя, чтобы отправить расписание в чат бота</p>
@@ -234,95 +225,113 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Полная база артистов со всех твоих скриншотов
         const allArtists = [
             // 18 ИЮЛЯ - СИНЯЯ
-            { name: "Секретный гость", date: "18 июля", scene: "Синяя сцена", img: "https://vkfest.ru/images/hidden-secret/blue_secret.png" },
-            { name: "ZIVERT", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzQzNDA4YWUxLTU3NzgtNDllYS04MzY5LTg3Mjg2ZTExNzgzOCIsImUiOjE3ODMxMTMyNTl9.NUzVkRh2hpnS6yTJwzmW3RYJ6aOpWhvigNeR-SlRcas" },
-            { name: "ДОРА", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FhMGFkNGNkLTEwNDQtNDk5NS05ZTZkLTQ4NmY3MDFhNzk5ZSIsImUiOjE3ODMxMTMyNTl9.PwjVuSDzGH16R-mlqRpgDckAR_oWdUEb_fVCP09O8oM" },
-            { name: "MARKUL", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzdjNmNiOTg5LTVhYWQtNDUxNi1hMjk1LTIyMjQ0NTFmMGJmYyIsImUiOjE3ODMxMTMyNTl9.Szu-5vGF_iAVEY8flHlFL1fSPqqZYxQFaH-DkRurTE8" },
-            { name: "ТАТЬЯНА КУРТУКОВА", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U2YzM3OTNmLTFkNmItNGM2My04MmFlLTE2OTdlMjlmNjk1ZiIsImUiOjE3ODMxMTMyNTl9.NP_cLwUEpfxHvOMyL_fbKeBdO6g2mCnP6sM5jRVaZlE" },
-            { name: "Aarne & Toxi$ & Big Baby Tape", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzgwNmZiNTM5LTcxZjEtNDA3OS1hZDY5LTcwNjliYmViMTBiNyIsImUiOjE3ODMxMTMyNTl9.SJlVzbPIK6l41k8qoAwcpK0itG09ootLE9uQDwi5res" },
-            { name: "ЕВА ПОЛЬНА", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FhNWViMjg2LThhODUtNDMxMS1hMzFkLWQ3ZmZlMzEzMzEyNSIsImUiOjE3ODMxMTMyNTl9.4nWOft8QPYiEmzcycB6v7O8VxWKefhDLgQK1H5rb9X4" },
-            { name: "IOWA", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzNkMmI3YjBlLWIyY2EtNDM1MC05Mjg4LTFiYjFiYmNkYTBiZSIsImUiOjE3ODMxMTMyNTl9.6K5kFhICXgEwSCVP-oxYT2qCcOhk2Igtqj8PsA-mbPM" },
-            { name: "JONY", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzEzNTczN2I5LWUyNTctNDdmZC1hZmRiLTliOGVmY2Y0N2NiNi9mOTBhYzBkYi1lOTdlLTQzY2YtOGEyMy0yOWIxNjU4MTkwNzkiLCJlIjoxNzgzMTEzMjU5fQ.wq0u5g_ZW-8ar137vfoM-rvJ3wuoWihD9tu_FP-tur4" },
+            { id: 1, name: "Секретный гость", date: "18 июля", scene: "Синяя сцена", img: "https://vkfest.ru/images/hidden-secret/blue_secret.png" },
+            { id: 2, name: "ZIVERT", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzQzNDA4YWUxLTU3NzgtNDllYS04MzY5LTg3Mjg2ZTExNzgzOCIsImUiOjE3ODMxMTMyNTl9.NUzVkRh2hpnS6yTJwzmW3RYJ6aOpWhvigNeR-SlRcas" },
+            { id: 3, name: "ДОРА", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FhMGFkNGNkLTEwNDQtNDk5NS05ZTZkLT44NmY3MDFhNzk5ZSIsImUiOjE3ODMxMTMyNTl9.PwjVuSDzGH16R-mlqRpgDckAR_oWdUEb_fVCP09O8oM" },
+            { id: 4, name: "MARKUL", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzdjNmNiOTg5LTVhYWQtNDUxNi1hMjk1LTIyMjQ0NTFmMGJmYyIsImUiOjE3ODMxMTMyNTl9.Szu-5vGF_iAVEY8flHlFL1fSPqqZYxQFaH-DkRurTE8" },
+            { id: 5, name: "ТАТЬЯНА КУРТУКОВА", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U2YzM3OTNmLTFkNmBeNGM2My04MmFlLTE2OTdlMjlmNjk1ZiIsImUiOjE3ODMxMTMyNTl9.NP_cLwUEpfxHvOMyL_fbKeBdO6g2mCnP6sM5jRVaZlE" },
+            { id: 6, name: "Aarne & Toxi$ & Big Baby Tape", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzgwNmZiNTM5LTcxZjEtNDA3OS1hZDY5LTcwNjliYmViMTBiNyIsImUiOjE3ODMxMTMyNTl9.SJlVzbPIK6l41k8qoAwcpK0itG09ootLE9uQDwi5res" },
+            { id: 7, name: "ЕВА ПОЛЬНА", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FhNWViMjg2LThhODUtNDMxMS1hMzFkLWQ3ZmZlMzEzMzEyNSIsImUiOjE3ODMxMTMyNTl9.4nWOft8QPYiEmzcycB6v7O8VxWKefhDLgQK1H5rb9X4" },
+            { id: 8, name: "IOWA", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzNkMmI3YjBlLWIyY2EtNDM1MC05Mjg4LTFiYjFiYmNkYTBiZSIsImUiOjE3ODMxMTMyNTl9.6K5kFhICXgEwSCVP-oxYT2qCcOhk2Igtqj8PsA-mbPM" },
+            { id: 9, name: "JONY", date: "18 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLz1zNTczN2I5LWUyNTctNDdmZC1hZmRiLTliOGVmY2Y0N2NiNi9mOTBhYzBkYi1lOTdlLTQzY2YtOGEyMy0yOWIxNjU4MTkwNzkiLCJlIjoxNzgzMTEzMjU5fQ.wq0u5g_ZW-8ar137vfoM-rvJ3wuoWihD9tu_FP-tur4" },
 
             // 18 ИЮЛЯ - БЕЛАЯ
-            { name: "BOULEVARD DEPO", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBiODAzZTc3LTBhMjctNGYyNy1iMjUzLWM4NTkwZTk0NDk4NiIsImUiOjE3ODMxMTM2NTZ9.0L909mwMX-9udJe_RcG-i32n6FvH_1FMEHMtK1BQNHk" },
-            { name: "ТРАВМА", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzY4ZWM1ODFlLTUyOTEtNGU3YS04NWNhLTM4NTVmYTllNGU0MiIsImUiOjE3ODMxMTM2NTZ9._45iD0gJLqz-7foDnRf3WZl6f9TsEHhzwMyhJVYSvvI" },
-            { name: "АК-47 & ТГК", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg1MTQ3MmI0LTMwMWYtNDBlNC1iZDZhLTljOTk1ODg1MTU0YiIsImUiOjE3ODMxMTM2NTZ9.pdZG0JN6yPdW0HPMxkjqUY_EyG6A2lh1HuZe-QQ_E-g" },
-            { name: "ГУДТАЙМС", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzcyNmRkYWFhLTZkNGQtNDFkZS05OTUzLTMxZTY4MWZhM2U5OSIsImUiOjE3ODMxMTM2NTZ9.fa8Tb41nnMRzuVyxkViA8Zyuff4nGyfoJp8CBTerMss" },
-            { name: "МАРТИН", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzcxYTNkYWU5LWFjNzctNDgzMi1hZTFhLTNmNzk2MzZjN2I3YiIsImUiOjE3ODMxMTM2NTZ9.ynVqVvXus19x-Pr6UnR0sKDRz4OetHkMFSQ70mh9cVM" },
-            { name: "MOREART", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRhYzA0YWQ5LTdkMWEtNGRkYy1iYjY5LWNiN2Y3NTcxMGQ3MSIsImUiOjE3ODMxMTM2NTZ9.OztcxfGV00ThOzFzHzv6bEbbxKgHCr-PbbonxtbgLh0" },
-            { name: "АНТОХА МС", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzE0ZGI5ZGY2LWZmNDgtNDc3Mi05MTI1LWE0ZWI4YjE3MmUyNSIsImUiOjE3ODMxMTM2NTZ9.CsDfZNRvUjI1R_UUGR95i4zMWC6rJF1oli56pQb6vkU" },
-            { name: "LIDA", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg4NjI3OTE1LWFhNDgtNDQ3MS04Mzk5LWMwNmEwZjA4MjBkOCIsImUiOjE3ODMxMTM2NTZ9.qqdZKKHItDm36EEExafF65aRYhwanPi5srCN3vuddcw" },
+            { id: 10, name: "BOULEVARD DEPO", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBiODAzZTc3LTBhMjctNGYyNy1iMjUzLWM4NTkwZTk0NDk4NiIsImUiOjE3ODMxMTM2NTZ9.0L909mwMX-9udJe_RcG-i32n6FvH_1FMEHMtK1BQNHk" },
+            { id: 11, name: "ТРАВМА", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzY4ZWM1ODFlLTUyOTEtNGU3YS04NWNhLTM4NTVmYTllNGU0MiIsImUiOjE3ODMxMTM2NTZ9._45iD0gJLqz-7foDnRf3WZl6f9TsEHhzwMyhJVYSvvI" },
+            { id: 12, name: "АК-47 & ТГК", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg1MTQ3MmI0LTMwMWYtNDBlNC1iZDZhLTljOTk1ODg1MTU0YiIsImUiOjE3ODMxMTM2NTZ9.pdZG0JN6yPdW0HPMxkjqUY_EyG6A2lh1HuZe-QQ_E-g" },
+            { id: 13, name: "ГУДТАЙМС", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzcyNmRkYWFhLTZkNGQtNDFkZS059NTMtMzE2ODEZhM0U5OSIsImUiOjE3ODMxMTM2NTZ9.fa8Tb41nnMRzuVyxkViA8Zyuff4nGyfoJp8CBTerMss" },
+            { id: 14, name: "МАРТИН", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzcxYTNkYWU5LWFjNzctNDgzMi1hZTFhLTNmNzk2MzZjN2I3YiIsImUiOjE3ODMxMTM2NTZ9.ynVqVvXus19x-Pr6UnR0sKDRz4OetHkMFSQ70mh9cVM" },
+            { id: 15, name: "MOREART", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRhYzA0YWQ5LTdkMWEtNGRkYy1iYjY5LWNiN2Y3NTcxMGQ3MSIsImUiOjE3ODMxMTM2NTZ9.OztcxfGV00ThOzFzHzv6bEbbxKgHCr-PbbonxtbgLh0" },
+            { id: 16, name: "АНТОХА МС", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzE0ZGI5ZGY2LWZmNDgtNDc3Mi05MTI1LWE0ZWI4YjE3MmUyNSIsImUiOjE3ODMxMTM6NTZ9.CsDfZNRvUjI1R_UUGR95i4zMWC6rJF1oli56pQb6vkU" },
+            { id: 17, name: "LIDA", date: "18 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg4NjI3OTE1LWFhNDgtNDQ3MS04Mzk5LWMwNmEwZjA4MjBkOCIsImUiOjE3ODMxMTM2NTZ9.qqdZKKHItDm36EEExafF65aRYhwanPi5srCN3vuddcw" },
 
             // 18 ИЮЛЯ - ФИОЛЕТОВАЯ
-            { name: "НАВЗДОХЕ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzc2ZGE1ZDIwLWZlZmUtNDBlYy04Y2E3LTUyZjQ4NGZiOTg3NiIsImUiOjE3ODMxMTM4MjB9.LRGA_TKpbhKP0XGqJwlP-GpaD8O8gMf0tx7GnOB0Tz4" },
-            { name: "СЕСТРЁНКА", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2MxZjQxYTMzLWU1NjMtNDRlOS05ZTcwLTQyNTdkOWU1MGU2NiIsImUiOjE3ODMxMTM4MjB9.QGsbFJhs9zFkQTDQlNQAAFlgARk9iaFVZwtqcmOadyQ" },
-            { name: "ROZALIA", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRjZjY5ZjY2LWFiNmUtNDc1NC1hMTYyLTliM2UyMWY3NzQ3OCIsImUiOjE3ODMxMTM4MjB9.gzAQ1feLRoSw42qP4cFmJbJLLi_sRFKaNbQS2SbhUeU" },
-            { name: "NANSI & SIDOROV", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FlOTFjYjBlLWI3N2QtNGNlYS1hMjJiLWIyYzliMTc4Y2U1OSIsImUiOjE3ODMxMTM4MjB9.tsZ26bEedONQMVnoXj9CUUh56F9I9eBS-sBt0zYnoEw" },
-            { name: "UGLI", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzJhYzY2YTBmLTI4ZTEtNDljMy05ZTUxLTIzMGRiNzZjNDZmNSIsImUiOjE3ODMxMTM4MjB9.fftkrf4jwYie7518xPwG4uqo0OEBYeLWdJgimkca9fY" },
-            { name: "TESLA BOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E4YTVhYmZhLWRhM2MtNDdhOS1iNjI0LTY4M2JjMDgyMTUxZiIsImUiOjE3ODMxMTM4MjB9.4I06doVSpeRW_Ronoogu9Y3u3qN3kAQOF8p9KJDqEzU" },
-            { name: "КРИЛИ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E1NTY1MmQ5LWVmZDktNGY0My04NjUzLWVmNTQ2MThhMmI1OCIsImUiOjE3ODMxMTM4MjB9.BFD-3YG-1VKMdgSOFN5TlARpEnO0JnzbR5SBMLnQi8E" },
-            { name: "КАТЮША", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzZhYjE2YTEzLTMzMDEtNGFiZi1hYmEyLWU4YmRlMTFhYzdlZCIsImUiOjE3ODMxMTM4MjB9.n8Hzw-xg61NLORWF7M9AkQsSLMN5tPmf0ayLdYQrZO8" },
-            { name: "OSIWOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzNkNzc1ZDYxLTA4OWItNDdlMC05MWVkLTY4MTVmYTZiMTUwYiIsImUiOjE3ODMxMTM4MjB9.yq-TEgcNQXei1Z-HRcLg-G6MGnuXCIIqpB-W_r1bIfE" },
+            { id: 18, name: "НАВЗДОХЕ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzc2ZGE1ZDIwLWZlZmUtNDBlYy04Y2E3LTUyZjQ4NGZiOTg3NiIsImUiOjE3ODMxMTM4MjB9.LRGA_TKpbhKP0XGqJwlP-GpaD8O8gMf0tx7GnOB0Tz4" },
+            { id: 19, name: "СЕСТРЁНКА", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2MxZjQxYTMzLWU1NjMtNDRlOS05ZTcwLTQyNTdkOWU1MGU2NiIsImUiOjE3ODMxMTM4MjB9.QGsbFJhs9zFkQTDQlNQAAFlgARk9iaFVZwtqcmOadyQ" },
+            { id: 20, name: "ROZALIA", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRjZjY5ZjY2LWFiNmUtNDc1NC1hMTYyLTliM2UyMWY3NzQ3OCIsImUiOjE3ODMxMTM4MjB9.gzAQ1feLRoSw42qP4cFmJbJLLi_sRFKaNbQS2SbhUeU" },
+            { id: 21, name: "NANSI & SIDOROV", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FlOTFjYjBlLWI3N2QtNGNlYS1hMjJiLWIyYzliMTc4Y2U1OSIsImUiOjE3ODMxMTM4MjB9.tsZ26bEedONQMVnoXj9CUUh56F9I9eBS-sBt0zYnoEw" },
+            { id: 22, name: "UGLI", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzJhYzY2YTBmLTI4ZTEtNDljMy05ZTUxLTIzMGRiNzZjNDZmNSIsImUiOjE3ODMxMTM4MjB9.fftkrf4jwYie7518xPwG4uqo0OEBYeLWdJgimkca9fY" },
+            { id: 23, name: "TESLA BOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E4YTVhYmZhLWRhM2MtNDdhOS1iNjI0LTY4M2JjMDgyMTUxZiIsImUiOjE3ODMxMTM4MjB9.4I06doVSpeRW_Ronoogu9Y3u3qN3kAQOF8p9KJDqEzU" },
+            { id: 24, name: "КРИЛИ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E1NTY1MmQ5LWVmZDktNGY0My04NjUzLWVmNTQ2MThhMmI1OCIsImUiOjE3ODMxMTM4MjB9.BFD-3YG-1VKMdgSOFN5TlARpEnO0JnzbR5SBMLnQi8E" },
+            { id: 25, name: "КАТЮША", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzZhYjE2YTEzLTMzMDEtNGFiZi1hYmEyLWU4YmRlMTFhYzdlZCIsImUiOjE3ODMxMTM4MjB9.n8Hzw-xg61NLORWF7M9AkQsSLMN5tPmf0ayLdYQrZO8" },
+            { id: 26, name: "OSIWOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzNkNzc1ZDYxLTA4OWItNDdlMC05MWVkLTY4MTVmYTZiMTUwYiIsImUiOjE3ODMxMTM4MjB9.yq-TEgcNQXei1Z-HRcLg-G6MGnuXCIIqpB-W_r1bIfE" },
 
             // 19 ИЮЛЯ - СИНЯЯ
-            { name: "Секретный гость", date: "19 июля", scene: "Синяя сцена", img: "https://vkfest.ru/images/hidden-secret/blue_secret.png" },
-            { name: "ВАДИМ САМОЙЛОВ / АГАТА КРИСТИ", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzE4Y2MyMjRiLTMwOWQtNDZkZS05YmY1LTVlOThlODhlZTQ5YSIsImUiOjE3ODMxMTM0ODN9.B1lkQwRUrd2f1s149L1NYBhgMOZt7VVxrxFez_0PtKA" },
-            { name: "T.A.T.U.", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2RhM2RiZTU1LTc0OWQtNDkxYy1iYjk1LTU5ZWMyNzJiMjMzNyIsImUiOjE3ODMxMTM0ODN9.PM916blgvgqR8_GXp7CzgFTSnEGtMUfUnS9RwJZqCvo" },
-            { name: "MONA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2IxNTJhOGE0LTRjZTktNGFiMi1iMWIwLTUwYmFkZDMxZDdhNCIsImUiOjE3ODMxMTM0ODN9.tXS_ynd_rc354LRipCMu08nAD-vZyDKA5YX7PKLSUhU" },
-            { name: "ICEGERGERT", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2Y4YWY1NTAxLTJmYjUtNGJhNS05MDdmLWRmYjhiOGNlMGRkMCIsImUiOjE3ODMxMTM0ODN9.V1tAJrVYaH907bCnEzlZSCPbTaqjOSGmMkTi1yXXfR8" },
-            { name: "PIZZA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U5NWNjYWMzLTRkOGEtNGQ0NS04YzIwLTNiZTRlODE3YTlmMiIsImUiOjE3ODMxMTM0ODN9.tU7J4b29Gpaazn6_c2BWJGhghN_TM-1JR_X0G7ZopKI" },
-            { name: "OG BUDA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2M5NzUyOGExLTI0NTItNDg0Mi05NDEwLTJmZWM5MmZkZWRmMSIsImUiOjE3ODMxMTM0ODN9.CF98EEybkeazCw9vLyl4X3QZbGW8bydBj6tpisNtJi4" },
-            { name: "BLIZKEY", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRmMzM2OTdlLTczYTgtNGMzYS1iZTFjLTJlNGY0Yzg2MDkxNCIsImUiOjE3ODMxMTM0ODN9.NIugnADZBQ4dKx3Y1g3mDZP5fybZFZUXb2PvqRMW9nQ" },
-            { name: "XOLIDAYBOY", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E0NTA2ZWM3LTc5MmQtNGM3ZC05ZDEwLTJlZGRlYTkxMjI4Yi8zZjczMDk0NC02MGMzLTRmNjMtYTdkNS0xOTY5NGY5NzBjZTEiLCJlIjoxNzgzMTEzNDgzfQ.d_GwPY8J4cxJ3sp6kwC2rJMUw-Blc3qKE8jC1i1IdhA" },
-            { name: "SERYABKINA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzM3ZDg1YjViLWU5ZDgtNGM3Ni1hZjJiLTM4NGMwYjRmMmJmNCIsImUiOjE3ODMxMTM0ODN9.6HcrZoN3prYTo14atp_jc55rrrUd_9q56YB6SvthLmA" },
-            { name: "МОТ", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzIxMGNiMTY0LTA3ZDItNDUyNy1iZmFiLWI4ZjQzYWU1ZjdhNiIsImUiOjE3ODMxMTM0ODN9.y26NOP1vzvgiAwraYqCWrSykopjBDxx2HmGrCKG0WGw" },
-            { name: "HOLLYFLAME", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRiNzE0YjQ0LTgzYTEtNGJiYy1iMjdkLTg1NzljOGMyZTA4MSIsImUiOjE3ODMxMTM0ODN9.tFDNl7i00bMH01JciaHAYYzq-haVAyOtVdCweMsHAmI" },
-            { name: "АРТУР ПИРОЖКОВ", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzA5MjQ2ZmIzLWUyNDYtNGIxZi1iNmE5LWVmNjNkNWIwYmJlMyIsImUiOjE3ODMxMTM0ODN9.1Bv_TDThNtFp1C5IELbMVoHWou7aGlk7CItD6TEPoqg" },
-            { name: "ДЖИГАН", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzgxNWIwYmQwLTIwMDItNDY1MS1hZDdjLTY1NjUyYWQyNTEyOCIsImUiOjE3ODMxMTM0ODN9.wvWxHX_ljnk4Nyw5C_gVACCPBjumWIhrqD5wPTI5_1g" },
+            { id: 27, name: "Секретный гость", date: "19 июля", scene: "Синяя сцена", img: "https://vkfest.ru/images/hidden-secret/blue_secret.png" },
+            { id: 28, name: "ВАДИМ САМОЙЛОВ / АГАТА КРИСТИ", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzE4Y2MyMjRiLTMwOWQtNDZkZS05YmY1LTVlOThlODhlZTQ5YSIsImUiOjE3ODMxMTM0ODN9.B1lkQwRUrd2f1s149L1NYBhgMOZt7VVxrxFez_0PtKA" },
+            { id: 29, name: "T.A.T.U.", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2RhM2RiZTU1LTc0OWQtNDkxYy1iYjk1LTU5ZWMyNzJiMjMzNyIsImUiOjE3ODMxMTM0ODN9.PM916blgvgqR8_GXp7CzgFTSnEGtMUfUnS9RwJZqCvo" },
+            { id: 30, name: "MONA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2IxNTJhOGE0LTRjZTktNGFiMi1iMWIwLTUwYmFkZDMxZDdhNCIsImUiOjE3ODMxMTM0ODN9.tXS_ynd_rc354LRipCMu08nAD-vZyDKA5YX7PKLSUhU" },
+            { id: 31, name: "ICEGERGERT", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2Y4YWY1NTAxLTJmYjUtNGJhNS05MDdmLWRmYjhiOGNlMGRkMCIsImUiOjE3ODMxMTM0ODN9.V1tAJrVYaH907bCnEzlZSCPbTaqjOSGmMkTi1yXXfR8" },
+            { id: 32, name: "PIZZA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U5NWNjYWMzLTRkOGEtNGQ0NS04YzIwLTNiZTRlODE3YTlmMiIsImUiOjE3ODMxMTM0ODN9.tU7J4b29Gpaazn6_c2BWJGhghN_TM-1JR_X0G7ZopKI" },
+            { id: 33, name: "OG BUDA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2M5NzUyOGExLTI0NTItNDg0Mi05NDEwLTJmZWM5MmZkZWRmMSIsImUiOjE3ODMxMTM0ODN9.CF98EEybkeazCw9vLyl4X3QZbGW8bydBj6tpisNtJi4" },
+            { id: 34, name: "BLIZKEY", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRmMzM2OTdlLTczYTgtNGMzYS1iZTFjLTJlNGY0Yzg2MDkxNCIsImUiOjE3ODMxMTM0ODN9.NIugnADZBQ4dKx3Y1g3mDZP5fybZFZUXb2PvqRMW9nQ" },
+            { id: 35, name: "XOLIDAYBOY", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E0NTA2ZWM3LTc5MmQtNGM3ZC05ZTEwLTJlZGRlYTkxMjI4Yi8zZjczMDk0NC02MGMzLTRmNjMtYTdkNS0xOTY5NGY5NzBjZTEiLCJlIjoxNzgzMTEzNDgzfQ.d_GwPY8J4cxJ3sp6kwC2rJMUw-Blc3qKE8jC1i1IdhA" },
+            { id: 36, name: "SERYABKINA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzM3ZDg1YjViLWU5ZDgtNGM3Ni1hZjJiLTM4NGMwYjRmMmJmNCIsImUiOjE3ODMxMTM0ODN9.6HcrZoN3prYTo14atp_jc55rrrUd_9q56YB6SvthLmA" },
+            { id: 37, name: "МОТ", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzIxMGNiMTY0LTA3ZDItNDUyNy1iZmFiLWI4ZjQzYWU1ZjdhNiIsImUiOjE3ODMxMTM0ODN9.y26NOP1vzvgiAwraYqCWrSykopjBDxx2HmGrCKG0WGw" },
+            { id: 38, name: "HOLLYFLAME", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRiNzE0YjQ0LTgzYTEtNGJiYy1iMjdkLTg1NzljOGMyZTA4MSIsImUiOjE3ODMxMTM0ODN9.tFDNl7i00bMH01JciaHAYYzq-haVAyOtVdCweMsHAmI" },
+            { id: 39, name: "АРТУР ПИРОЖКОВ", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzA5MjQ2ZmIzLWUyNDYtNGIxZi1iNmE5LWVmNjNkNWIwYmJlMyIsImUiOjE3ODMxMTM0ODN9.1Bv_TDThNtFp1C5IELbMVoHWou7aGlk7CItD6TEPoqg" },
+            { id: 40, name: "ДЖИГАН", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzgxNWIwYmQwLTIwMDItNDY1MS1hZDdjLTY1NjUyYWQyNTEyOCIsImUiOjE3ODMxMTM0ODN9.wvWxHX_ljnk4Nyw5C_gVACCPBjumWIhrqD5wPTI5_1g" },
 
             // 19 ИЮЛЯ - БЕЛАЯ
-            { name: "ПАЗНЯКС", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzUwNTQyZDU5LThiNDItNGMxZC1iNjFiLTAwMjg2NGFlZGFhMyIsImUiOjE3ODMxMTM2NTZ9.AyeXPOA_Jl40CPRlYiJuVCl3dwtJl15HUlKjAZs6Hco" },
-            { name: "GONE.Fludd", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzIxNDQwZWRlLTk0OTItNGVmNC1hMjI3LWZkNzM1MzhlMTFkNCIsImUiOjE3ODMxMTM2NTZ9.TnRJPer0niopy-J0tf3gnp9RA_6ApzoG9rDGJ3FU-iI" },
-            { name: "ZVENTA SVENTANA", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U0ODM0ODAwLWNkYWItNDQxNi1iZmIxLTRmNDI2MjczZWQxZiIsImUiOjE3ODMxMTM2NTZ9.rekH-QkziXStbm3ZlXWk5T2PJuefsmB4rWl8FAGnz9E" },
-            { name: "СЛОВЕТСКИЙ", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRjNmRiN2NiLWU3OTctNGRhMS1iYjBhLTM5ZjZiZWU3NmVmMyIsImUiOjE3ODMxMTM2NTZ9.GmHfyKtZQkR1hynNlXSY7zV3-J9QbSMgrfYrM9q1KII" },
-            { name: "ТИМА ИЩЕТ СВЕТ", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U2N2NkMjE4LTlkYWItNDExYS04OGY3LTg4NzQ1MmE2MWJlNiIsImUiOjE3ODMxMTM2NTZ9.zgSopihLymefOFQU5WC-9WDP5QdPhg1jIIlsFv6yYGs" },
-            { name: "СЛАВА КПСС", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzA2MTRjY2FlLWNiODEtNDE1NC05YzlmLWZlN2Q2NjJlYTkwOCIsImUiOjE3ODMxMTM2NTZ9.eA4ppe1ZuAlSUCHbwlhDrj8f0lzOmqUf2WLVF2gNhzQ" },
-            { name: "ПОЛКА", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzU2OGViYzU0LWFkMTktNGJjZi05NmMyLTE0OTAxMTgyZDkzYSIsImUiOjE3ODMxMTM2NTZ9.DYdElL9iGb_ub9EPj7Zs8VFb-DstZUS_xyRO5bBWeSc" },
-            { name: "SALUKI", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2M5OTljNzM5LTg2YTQtNGY4MC1iZGU5LTg1NjAyNjBlY2IxNS84MDY4NGFiYy0wOTI0LTQ1MjktYjM5YS03ZDk4MGIwNDAzOTkiLCJlIjoxNzgzMTEzNjU2fQ.aH5Tcdpcgi4VY_Y_iXUmpPQJlXzyT2haQNrj57qY0OY" },
-            { name: "LIL KRYSTALLL", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FhMzFjNGNlLWQyNDctNDFkMS05YmZiLWM4MTA5NmRkN2YzYy9jNzEyYmI1YS01MmNjLTQ2NTQtYTE4Zi1lNmFjMTgwOGU5OGMiLCJlIjoxNzgzMTEzNjU2fQ.KC0ZIe9SLGbZhX25e63wWvYalS1kVHXnsby8aMkaLOU" },
+            { id: 41, name: "ПАЗНЯКС", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzUwNTQyZDU5LThiNDItNGMxZC1iNjFiLTAwMjg2NGFlZGFhMyIsImUiOjE3ODMxMTM2NTZ9.AyeXPOA_Jl40CPRlYiJuVCl3dwtJl15HUlKjAZs6Hco" },
+            { id: 42, name: "GONE.Fludd", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzIxNDQwZWRlLTk0OTItNGVmNC1hMjI3LWZkNzM1MzhlMTFkNCIsImUiOjE3ODMxMTM2NTZ9.TnRJPer0niopy-J0tf3gnp9RA_6ApzoG9rDGJ3FU-iI" },
+            { id: 43, name: "ZVENTA SVENTANA", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U0ODM0ODAwLWNkYWItNDQxNi1iZmIxLTRmNDI2MjczZWQxZiIsImUiOjE3ODMxMTM2NTZ9.rekH-QkziXStbm3ZlXWk5T2PJuefsmB4rWl8FAGnz9E" },
+            { id: 44, name: "СЛОВЕТСКИЙ", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRjNmRiN2NiLWU3OTctNGRhMS1iYjBhLTM5ZjZiZWU3NmVmMyIsImUiOjE3ODMxMTM2NTZ9.GmHfyKtZQkR1hynNlXSY7zV3-J9QbSMgrfYrM9q1KII" },
+            { id: 45, name: "ТИМА ИЩЕТ СВЕТ", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U2N2NkMjE4LTlkYWItNDExYS04OGY3LTg4NzQ1MmE2MWJlNiIsImUiOjE3ODMxMTM2NTZ9.zgSopihLymefOFQU5WC-9WDP5QdPhg1jIIlsFv6yYGs" },
+            { id: 46, name: "СЛАВА КПСС", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzA2MTRjY2FlLWNiODEtNDE1NC05YzlmLWZlN2Q2NjJlYTkwOCIsImUiOjE3ODMxMTM2NTZ9.eA4ppe1ZuAlSUCHbwlhDrj8f0lzOmqUf2WLVF2gNhzQ" },
+            { id: 47, name: "ПОЛКА", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzU2OGViYzU0LWFkMTktNGJjZi05NmMyLTE0OTAxMTgyZDkzYSIsImUiOjE3ODMxMTM2NTZ9.DYdElL9iGb_ub9EPj7Zs8VFb-DstZUS_xyRO5bBWeSc" },
+            { id: 48, name: "SALUKI", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2M5OTljNzM5LTg2YTQtNGY4MC1iZGU5LTg1NjAyNjBlY2IxNS84MDY4NGFiYy0wOTI0LT41MjktYjM5YS03ZDk4MGIwNDAzOTkiLCJlIjoxNzgzMTEzNjU2fQ.aH5Tcdpcgi4VY_Y_iXUmpPQJlXzyT2haQNrj57qY0OY" },
+            { id: 49, name: "LIL KRYSTALLL", date: "19 июля", scene: "Белая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FhMzFjNGNlLWQyNDctNDFkMS05YmZiLWM4MTA5NmRkN2YzYy9jNzEyYmI1YS01MmNjLTQ2NTQtYTE4Zi1lNmFjMTgwOGU5OGMiLCJlIjoxNzgzMTEzNjU2fQ.KC0ZIe9SLGbZhX25e63wWvYalS1kVHXnsby8aMkaLOU" },
 
             // 19 ИЮЛЯ - ФИОЛЕТОВАЯ
-            { name: "ХМЫРОВ", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRlNWU5M2E4LTAwZDctNDA1MC04Mjk0LTAzYzlhZTZjMjY3MCIsImUiOjE3ODMxMTM4MjB9.OkikYMUojj0-WtMwyCk3TbjnwyV6LkZ9hrpu2uEIc6o" },
-            { name: "АСИЯ", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBmZWVmZGY0LWI2MzctNGZiZS04ZjBkLTA0NThmNjM5OWVjMyIsImUiOjE3ODMxMTM4MjB9.LunSuDjMZ1ByIJ5KM5HSF_AbjhkgcbSCs1fVePL5sXo" },
-            { name: "CHEESE PEOPLE", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzZmYzAzMjQ0LWE3ODAtNGJkMy05YmVjLWUzYTYxNmJkMGVlNSIsImUiOjE3ODMxMTM4MjB9.TR22FGb7ZcnWey-bSgG3Kf65TXOyL6g54EegBUt39XA" },
-            { name: "SKY RAE", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2UxNGUxNWRkLWJlN2YtNDEwMy04YTczLTdkOWZjYzY2YzQwZCIsImUiOjE3ODMxMTM4MjB9.Ftn02QgeNHQeJviTmzlJ9H0sKLo8H__8puk8r61jKcw" },
-            { name: "NOMAD PUNK", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzQxMWJjYWQyLTdjZjItNDQ0OC05MTRkLTkxZWMwNmVjYWY3YiIsImUiOjE3ODMxMTM4MjB9.-O1kWDXUfivsDTbllwUDvLgW7qrZHjRoBZVozmcJIS8" },
-            { name: "ПЛУТТО", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2Q1NzA1MDc5LWMxNDgtNDQyZi04OTdlLTczZjJlMDgwMjhmMSIsImUiOjE3ODMxMTM4MjB9.vTBRHq_bu3RLrFxH_KGmc77c-Zq8Qaf3yzP_q2tiGx4" },
-            { name: "УЛЬЯНА МАМУШКИНА", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg2ZDBjMjdkLWEzYjctNDUyZC1hNGU1LTlmYTg5M2U3YzVhYiIsImUiOjE3ODMxMTM4MjB9.QrZPgpCsnbB04UjYYvBdRfb4I-0GkAFq3fTIMcn1h40" },
-            { name: "ARUSTAMOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBiMWUzZDdmLTk4OWEtNGU0MC04Y2ViLWMwMDk0NWVkZmVjYSIsImUiOjE3ODMxMTM4MjB9.2zdb3TVypH8lcfiElQYR6-d7E5sBogwhNqogRP2A9Bo" },
-            { name: "CHEBANOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzVmMDdlY2VmLWRmNzctNDQ2NC1hYWJlLWZmNTE5NGQ4NWMwNSIsImUiOjE3ODMxMTM4MjB9.Bk-YtcloBXM5a7_xKY-iCfCerbq9kWsaEMuR3eQJpvI" }
+            { id: 50, name: "ХМЫРОВ", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRlNWU5M2E4LTAwZDctNDA1MC04Mjk0LTAzYzlhZTZjMjY3MCIsImUiOjE3ODMxMTM4MjB9.OkikYMUojj0-WtMwyCk3TbjnwyV6LkZ9hrpu2uEIc6o" },
+            { id: 51, name: "АСИЯ", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBmZWVmZGY0LWI2MzctNGZiZS04ZjBkLTA0NThmNjM5OWVjMyIsImUiOjE3ODMxMTM4MjB9.LunSuDjMZ1ByIJ5KM5HSF_AbjhkgcbSCs1fVePL5sXo" },
+            { id: 52, name: "CHEESE PEOPLE", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzZmYzAzMjQ0LWE3ODAtNGJkMy05YmVjLWUzYTYxNmJkMGVlNSIsImUiOjE3ODMxMTM4MjB9.TR22FGb7ZcnWey-bSgG3Kf65TXOyL6g54EegBUt39XA" },
+            { id: 53, name: "SKY RAE", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2UxNGUxNWRkLWJlN2YtNDEwMy04YTczLTdkOWZjYzY2YzQwZCIsImUiOjE3ODMxMTM4MjB9.Ftn02QgeNHQeJviTmzlJ9H0sKLo8H__8puk8r61jKcw" },
+            { id: 54, name: "NOMAD PUNK", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzQxMWJjYWQyLTdjZjItNDQ0OC05MTRkLTkxZWMwNmVjYWY3YiIsImUiOjE3ODMxMTM4MjB9.-O1kWDXUfivsDTbllwUDvLgW7qrZHjRoBZVozmcJIS8" },
+            { id: 55, name: "ПЛУТТО", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2Q1NzA1MDc5LWMxNDgtNDQyZi04OTdlLTczZjJlMDgwMjhmMSIsImUiOjE3ODMxMTM4MjB9.vTBRHq_bu3RLrFxH_KGmc77c-Zq8Qaf3yzP_q2tiGx4" },
+            { id: 56, name: "УЛЬЯНА МАМУШКИНА", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg2ZDBjMjdkLWEzYjctNDUyZC1hNGU1LTlmYTg5M2U3YzVhYiIsImUiOjE3ODMxMTM4MjB9.QrZPgpCsnbB04UjYYvBdRfb4I-0GkAFq3fTIMcn1h40" },
+            { id: 57, name: "ARUSTAMOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBiMWUzZDdmLTk4OWEtNGU0MC04Y2ViLWMwMDk0NWVkZmVjYSIsImUiOjE3ODMxMTM4MjB9.2zdb3TVypH8lcfiElQYR6-d7E5sBogwhNqogRP2A9Bo" },
+            { id: 58, name: "CHEBANOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzVmMDdlY2VmLWRmNzctNDQ2NC1hYWJlLWZmNTE5NGQ4NWMwNSIsImUiOjE3ODMxMTM4MjB9.Bk-YtcloBXM5a7_xKY-iCfCerbq9kWsaEMuR3eQJpvI" }
         ];
 
+        // Линейный порядок прохождения сцен
+        const flowSteps = [
+            { date: "18 июля", scene: "Синяя сцена", label: "18 июля • Синяя" },
+            { date: "18 июля", scene: "Белая сцена", label: "18 июля • Белая" },
+            { date: "18 июля", scene: "Фиолетовая сцена", label: "18 июля • Фиолет" },
+            { date: "19 июля", scene: "Синяя сцена", label: "19 июля • Синяя" },
+            { date: "19 июля", scene: "Белая сцена", label: "19 июля • Белая" },
+            { date: "19 июля", scene: "Фиолетовая сцена", label: "19 июля • Фиолет" }
+        ];
+
+        let currentStepIdx = 0;
         let activeArtists = [];
         let currentIdx = 0;
-        const totalVotes = { yes: [], maybe: [], no: [] };
+        const voterHistory = {}; 
 
-        function filterChanged() {
-            const selectedDate = document.getElementById('date-select').value;
-            const selectedScene = document.getElementById('scene-select').value;
+        function initStep() {
+            // Если все шаги пройдены, сразу открываем экран результатов
+            if (currentStepIdx >= flowSteps.length) {
+                showResultScreen();
+                return;
+            }
 
-            // Сортируем базу под фильтры
-            activeArtists = allArtists.filter(a => a.date === selectedDate && a.scene === selectedScene);
-            currentIdx = 0;
+            const currentStep = flowSteps[currentStepIdx];
             
-            // Сбрасываем дисплей стопки, если он скрывался на финальном экране
-            document.getElementById('deck').style.display = 'block';
-            document.getElementById('controls').style.display = 'flex';
-            document.getElementById('result-stage').style.display = 'none';
+            // Обновляем текст в верхней плашке
+            document.getElementById('status-badge').innerText = currentStep.label;
+
+            // Вытягиваем артистов для текущего шага
+            activeArtists = allArtists.filter(a => a.date === currentStep.date && a.scene === currentStep.scene);
+            currentIdx = 0;
+
+            // Показываем кнопку досрочного завершения, если сделан хотя бы один выбор за всё время
+            if (Object.keys(voterHistory).length > 0) {
+                document.getElementById('finish-now-btn').style.display = 'block';
+            }
 
             renderDeck();
         }
@@ -333,16 +342,14 @@
 
             const cardsToRender = activeArtists.slice(currentIdx, currentIdx + 3);
 
-            if (cardsToRender.length === 0 && currentIdx > 0) {
-                showResultScreen();
-                return;
-            } else if (cardsToRender.length === 0) {
-                deck.innerHTML = '<div style="text-align:center; padding-top:120px; color:#65676b; font-weight:700; font-size:15px;">Список артистов пуст 🤷‍♂️</div>';
-                document.getElementById('controls').style.display = 'none';
+            // Если на этой сцене карточки закончились
+            if (cardsToRender.length === 0) {
+                // Переходим к следующему шагу в автоматическом цикле
+                currentStepIdx++;
+                initStep();
                 return;
             }
 
-            // Рендер задом наперед для верного наложения слоев
             cardsToRender.reverse().forEach((artist) => {
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -362,14 +369,20 @@
         function vote(type) {
             const deck = document.getElementById('deck');
             const topCard = deck.lastElementChild;
-            if (!topCard || activeArtists.length === 0) return;
+            if (!topCard || activeArtists.length === 0 || !activeArtists[currentIdx]) return;
 
             topCard.classList.add(`swipe-${type}`);
             
             const artist = activeArtists[currentIdx];
-            totalVotes[type].push(`${artist.name} (${artist.date}, ${artist.scene})`);
+            voterHistory[artist.id] = {
+                name: artist.name,
+                date: artist.date,
+                scene: artist.scene,
+                choice: type
+            };
 
             currentIdx++;
+            document.getElementById('finish-now-btn').style.display = 'block';
 
             setTimeout(() => {
                 renderDeck();
@@ -378,7 +391,8 @@
 
         function showResultScreen() {
             document.getElementById('deck').style.display = 'none';
-            document.getElementById('controls').style.display = 'none';
+            document.getElementById('game-controls').style.display = 'none';
+            document.getElementById('header-nav').style.display = 'none';
             document.getElementById('result-stage').style.display = 'block';
         }
 
@@ -389,17 +403,28 @@
                 return;
             }
 
+            const yesVotes = [];
+            const maybeVotes = [];
+            const noVotes = [];
+
+            Object.values(voterHistory).forEach(item => {
+                const formatLine = `${item.name} (${item.date}, ${item.scene})`;
+                if (item.choice === 'yes') yesVotes.push(formatLine);
+                if (item.choice === 'maybe') maybeVotes.push(formatLine);
+                if (item.choice === 'no') noVotes.push(formatLine);
+            });
+
             let report = `🎫 Мой VK Fest Match\n👤 Пользователь: ${name}\n\n`;
-            if (totalVotes.yes.length) report += `🔥 ИДУ:\n• ${totalVotes.yes.join('\n• ')}\n\n`;
-            if (totalVotes.maybe.length) report += `🤷‍♂️ 50/50:\n• ${totalVotes.maybe.join('\n• ')}\n\n`;
-            if (totalVotes.no.length) report += `❌ МИМО:\n• ${totalVotes.no.join('\n• ')}`;
+            if (yesVotes.length) report += `🔥 ИДУ:\n• ${yesVotes.join('\n• ')}\n\n`;
+            if (maybeVotes.length) report += `🤷‍♂️ 50/50:\n• ${maybeVotes.join('\n• ')}\n\n`;
+            if (noVotes.length) report += `❌ МИМО:\n• ${noVotes.join('\n• ')}`;
 
             tg.sendData(report);
             tg.close();
         }
 
-        // Старт
-        filterChanged();
+        // Самый первый запуск приложения
+        initStep();
     </script>
 </body>
 </html>

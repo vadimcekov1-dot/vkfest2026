@@ -18,7 +18,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--vk-blue);
+            background-color: #ebedf0;
             color: var(--text-color);
             margin: 0;
             padding: 12px;
@@ -40,7 +40,7 @@
             display: flex;
             flex-direction: column;
             height: calc(100vh - 24px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
         }
 
         .header-filters {
@@ -66,13 +66,14 @@
             font-size: 11px;
             color: #000;
             text-transform: uppercase;
+            transition: all 0.3s ease;
         }
 
         .card-deck {
             position: relative;
             width: 100%;
             flex-grow: 1;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             height: 380px;
         }
 
@@ -81,23 +82,25 @@
             width: 100%;
             height: 100%;
             background-color: var(--card-bg);
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15), opacity 0.3s ease;
             transform-origin: center bottom;
         }
 
-        .card:nth-last-child(1) { transform: scale(1) translateY(0); z-index: 3; }
+        /* Эффект стопки карточек */
+        .card:nth-last-child(1) { transform: scale(1) translateY(0); z-index: 3; opacity: 1; }
         .card:nth-last-child(2) { transform: scale(0.95) translateY(12px); z-index: 2; opacity: 0.8; }
         .card:nth-last-child(3) { transform: scale(0.9) translateY(24px); z-index: 1; opacity: 0.4; }
         .card:nth-last-child(n+4) { display: none; }
 
-        .card.swipe-yes { transform: translate(150%, -20px) rotate(20deg) !important; opacity: 0; }
-        .card.swipe-no { transform: translate(-150%, -20px) rotate(-20deg) !important; opacity: 0; }
-        .card.swipe-maybe { transform: translate(0, -150%) scale(0.8) !important; opacity: 0; }
+        /* Красивые и плавные анимации улетания карточек */
+        .card.swipe-yes { transform: translate(150%, -40px) rotate(25deg) !important; opacity: 0; }
+        .card.swipe-no { transform: translate(-150%, -40px) rotate(-25deg) !important; opacity: 0; }
+        .card.swipe-maybe { transform: translate(0, -150%) scale(0.7) !important; opacity: 0; }
 
         .card-image {
             width: 100%;
@@ -109,19 +112,24 @@
 
         .scene-badge {
             position: absolute;
-            top: 12px;
-            left: 12px;
-            background: var(--vk-blue);
+            top: 14px;
+            left: 14px;
             color: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 10px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
+        /* Стилизация динамических цветов для сцен */
+        .badge-blue { background: #0077ff; color: white; }
+        .badge-white { background: #ffffff; color: #000000; border: 1px solid #dcdfe6; }
+        .badge-purple { background: #a855f7; color: white; }
+
         .card-info {
-            padding: 12px;
+            padding: 14px;
             text-align: center;
             background: white;
             flex-grow: 1;
@@ -131,51 +139,69 @@
         }
 
         .artist-name {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 800;
             margin: 0 0 4px 0;
             text-transform: uppercase;
+            letter-spacing: -0.5px;
         }
 
         .artist-tag {
-            font-size: 12px;
+            font-size: 13px;
             color: #65676b;
             margin: 0;
         }
 
+        /* Круглые Tinder кнопки */
         .buttons-container {
             display: flex;
-            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
             width: 100%;
         }
 
-        .btn {
-            flex: 1;
+        .btn-circle {
             border: none;
-            padding: 14px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 14px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             cursor: pointer;
-            transition: transform 0.1s ease;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             color: white;
         }
-        .btn:active { transform: scale(0.95); }
-        .btn-no { background-color: var(--btn-no); }
-        .btn-maybe { background-color: var(--btn-maybe); color: black; }
-        .btn-yes { background-color: var(--btn-yes); }
+        .btn-circle:active { transform: scale(0.9); }
+
+        .btn-no { width: 56px; height: 56px; background-color: #fee2e2; color: var(--btn-no); font-size: 20px; }
+        .btn-maybe { width: 50px; height: 56px; background-color: #fef9c3; color: #ca8a04; font-size: 18px; border-radius: 16px; }
+        .btn-yes { width: 64px; height: 64px; background-color: #dcfce7; color: var(--btn-yes); font-size: 24px; }
 
         .finish-block {
             width: 100%;
-            margin-top: 10px;
+            margin-top: 14px;
             display: none;
+        }
+
+        .btn-flat {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            background-color: #f0f2f5;
+            color: #65676b;
+            cursor: pointer;
         }
 
         .result-screen {
             display: none;
             text-align: center;
-            padding: 20px 10px;
+            padding: 10px 0;
             height: 100%;
+            overflow-y: auto;
         }
 
         .form-input {
@@ -188,6 +214,38 @@
             margin-bottom: 16px;
             outline: none;
             text-align: center;
+        }
+
+        .edit-list {
+            text-align: left;
+            margin: 15px 0;
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #e4e6eb;
+            border-radius: 16px;
+            padding: 10px;
+            background: #fafafa;
+        }
+        .edit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 4px;
+            border-bottom: 1px solid #eedf5f5;
+            font-size: 13px;
+        }
+        .edit-item:last-child { border-bottom: none; }
+        .edit-name { font-weight: 700; max-width: 180px; }
+        
+        .mini-btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #fee2e2;
+            color: #ef4444;
         }
     </style>
 </head>
@@ -203,21 +261,26 @@
         
         <div id="game-controls">
             <div class="buttons-container" id="controls">
-                <button class="btn btn-no" onclick="vote('no')">❌ МИМО</button>
-                <button class="btn btn-maybe" onclick="vote('maybe')">🤷‍♂️ 50/50</button>
-                <button class="btn btn-yes" onclick="vote('yes')">🔥 ИДУ</button>
+                <button class="btn-circle btn-no" onclick="vote('no')">❌</button>
+                <button class="btn-circle btn-maybe" onclick="vote('maybe')">🤷‍♂️</button>
+                <button class="btn-circle btn-yes" onclick="vote('yes')">🔥</button>
             </div>
             
             <div class="finish-block" id="finish-now-btn">
-                <button class="btn" style="width:100%; background-color:#828282;" onclick="showResultScreen()">🏁 Закончить досрочно и отправить</button>
+                <button class="btn-flat" onclick="showResultScreen()">🏁 Закончить досрочно и отправить</button>
             </div>
         </div>
 
         <div class="result-screen" id="result-stage">
-            <h2 style="font-size: 26px; margin-bottom: 8px; font-weight: 800;">🎉 Выбор сделан!</h2>
-            <p style="color: #65676b; margin-bottom: 24px; font-size: 14px;">Введи свое имя, чтобы отправить расписание в чат бота</p>
+            <h2 style="font-size: 24px; margin-bottom: 4px; font-weight: 800; color:#000;">🎉 Выбор сделан!</h2>
+            <p style="color: #65676b; margin-bottom: 12px; font-size: 13px;">Проверь свой список или измени мнение:</p>
+            
+            <div class="edit-list" id="my-votes-list"></div>
+
             <input type="text" id="username" class="form-input" placeholder="Твое имя">
-            <button class="btn btn-yes" style="width: 100%; background-color: var(--vk-blue);" onclick="sendDataToBot()">Поделиться результатом</button>
+            <button class="btn-flat" style="width: 100%; background-color: var(--vk-blue); color:white; padding:14px; border-radius:14px; font-size:15px; margin-bottom: 10px;" onclick="sendDataToBot()">Поделиться результатом</button>
+            
+            <button class="btn-flat" style="width: 100%; background-color: #fff; color:#ef4444; border:1px solid #fee2e2;" onclick="resetAllProgress()">🔄 Сбросить и пройти заново</button>
         </div>
     </div>
 
@@ -250,7 +313,7 @@
             // 18 ИЮЛЯ - ФИОЛЕТОВАЯ
             { id: 18, name: "НАВЗДОХЕ", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzc2ZGE1ZDIwLWZlZmUtNDBlYy04Y2E3LTUyZjQ4NGZiOTg3NiIsImUiOjE3ODMxMTM4MjB9.LRGA_TKpbhKP0XGqJwlP-GpaD8O8gMf0tx7GnOB0Tz4" },
             { id: 19, name: "СЕСТРЁНКА", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2MxZjQxYTMzLWU1NjMtNDRlOS05ZTcwLTQyNTdkOWU1MGU2NiIsImUiOjE3ODMxMTM4MjB9.QGsbFJhs9zFkQTDQlNQAAFlgARk9iaFVZwtqcmOadyQ" },
-            { id: 20, name: "ROZALIA", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRjZjY5ZjY2LWFiNmUtNDc1NC1hMTYyLTliM2UyMWY3NzQ3OCIsImUiOjE3ODMxMTM4MjB9.gzAQ1feLRoSw42qP4cFmJbJLLi_sRFKaNbQS2SbhUeU" },
+            { id: 20, name: "ROZALIA", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRjZjY5ZjY2LWFiNmUtNDc1NC1hMT6yLTliM2UyMWY3NzQ3OCIsImUiOjE3ODMxMTM4MjB9.gzAQ1feLRoSw42qP4cFmJbJLLi_sRFKaNbQS2SbhUeU" },
             { id: 21, name: "NANSI & SIDOROV", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2FlOTFjYjBlLWI3N2QtNGNlYS1hMjJiLWIyYzliMTc4Y2U1OSIsImUiOjE3ODMxMTM4MjB9.tsZ26bEedONQMVnoXj9CUUh56F9I9eBS-sBt0zYnoEw" },
             { id: 22, name: "UGLI", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzJhYzY2YTBmLTI4ZTEtNDljMy05ZTUxLTIzMGRiNzZjNDZmNSIsImUiOjE3ODMxMTM4MjB9.fftkrf4jwYie7518xPwG4uqo0OEBYeLWdJgimkca9fY" },
             { id: 23, name: "TESLA BOY", date: "18 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E4YTVhYmZhLWRhM2MtNDdhOS1iNjI0LTY4M2JjMDgyMTUxZiIsImUiOjE3ODMxMTY2OTB9.LCPS7WisjsNMT-MScg_R7FmrJ4aQ1G1k0Qa-Ar6FySs" },
@@ -265,7 +328,7 @@
             { id: 30, name: "MONA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2IxNTJhOGE0LTRjZTktNGFiMi1iMWIwLTUwYmFkZDMxZDdhNCIsImUiOjE3ODMxMTM0ODN9.tXS_ynd_rc354LRipCMu08nAD-vZyDKA5YX7PKLSUhU" },
             { id: 31, name: "ICEGERGERT", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2Y4YWY1NTAxLTJmYjUtNGJhNS05MDdmLWRmYjhiOGNlMGRkMCIsImUiOjE3ODMxMTM0ODN9.V1tAJrVYaH907bCnEzlZSCPbTaqjOSGmMkTi1yXXfR8" },
             { id: 32, name: "PIZZA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2U5NWNjYWMzLTRkOGEtNGQ0NS04YzIwLTNiZTRlODE3YTlmMiIsImUiOjE3ODMxMTM0ODN9.tU7J4b29Gpaazn6_c2BWJGhghN_TM-1JR_X0G7ZopKI" },
-            { id: 33, name: "OG BUDA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2M5NzUyOGExLTI0NTItNDg0Mi05NDEwLTJmZWM5MmZkZWRmMSIsImUiOjE3ODMxMTM0ODN9.CF98EEybkeazCw9vLyl4X3QZbGW8bydBj6tpisNtJi4" },
+            { id: 33, name: "OG BUDA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2M5NzUyOGExLTI0NTItNDg0Mi05NDEwLTJmZWM5MmZkZWRmMSIsImUiOjE3ODMxMTM4ODN9.CF98EEybkeazCw9vLyl4X3QZbGW8bydBj6tpisNtJi4" },
             { id: 34, name: "BLIZKEY", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzRmMzM2OTdlLTczYTgtNGMzYS1iZTFjLTJlNGY0Yzg2MDkxNCIsImUiOjE3ODMxMTM0ODN9.NIugnADZBQ4dKx3Y1g3mDZP5fybZFZUXb2PvqRMW9nQ" },
             { id: 35, name: "XOLIDAYBOY", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2E0NTA2ZWM3LTc5MmQtNGM3ZC05ZDEwLTJlZGRlYTkxMjI4Yi8zZjczMDk0NC02MGMzLTRmNjMtYTdkNS0xOTY5NGY5NzBjZTEiLCJlIjoxNzgzMTE2NzUyfQ.es23QW4yo5wwwxVxvf5GpgGcQFtemMOx22By-iC2PdU" },
             { id: 36, name: "SERYABKINA", date: "19 июля", scene: "Синяя сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzM3ZDg1YjViLWU5ZDgtNGM3Ni1hZjJiLTM4NGMwYjRmMmJmNCIsImUiOjE3ODMxMTM0ODN9.6HcrZoN3prYTo14atp_jc55rrrUd_9q56YB6SvthLmA" },
@@ -293,27 +356,25 @@
             { id: 54, name: "NOMAD PUNK", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzQxMWJjYWQyLTdjZjItNDQ0OC05MTRkLTkxZWMwNmVjYWY3YiIsImUiOjE3ODMxMTM4MjB9.-O1kWDXUfivsDTbllwUDvLgW7qrZHjRoBZVozmcJIS8" },
             { id: 55, name: "ПЛУТТО", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wL2Q1NzA1MDc5LWMxNDgtNDQyZi04OTdlLTczZjJlMDgwMjhmMSIsImUiOjE3ODMxMTM4MjB9.vTBRHq_bu3RLrFxH_KGmc77c-Zq8Qaf3yzP_q2tiGx4" },
             { id: 56, name: "УЛЬЯНА МАМУШКИНА", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzg2ZDBjMjdkLWEzYjctNDUyZC1hNGU1LTlmYTg5M2U3YzVhYiIsImUiOjE3ODMxMTM4MjB9.QrZPgpCsnbB04UjYYvBdRfb4I-0GkAFq3fTIMcn1h40" },
-            { id: 57, name: "ARUSTAMOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzBiMWUzZDdmLTk4OWEtNGU0MC04Y2ViLWMwMDk0NWVkZmVjYSIsImUiOjE3ODMxMTM4MjB9.2zdb3TVypH8lcfiElQYR6-d7E5sBogwhNqogRP2A9Bo" },
+            { id: 57, name: "ARUSTAMOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzA0MWUzZDdmLTk4OWEtNGU0MC04Y2ViLWMwMDk0NWVkZmVjYSIsImUiOjE3ODMxMTM4MjB9.2zdb3TVypH8lcfiElQYR6-d7E5sBogwhNqogRP2A9Bo" },
             { id: 58, name: "CHEBANOV", date: "19 июля", scene: "Фиолетовая сцена", img: "https://api-vkfest.vvdev.ru/api/media-proxy?t=eyJ1IjoiaHR0cHM6Ly9idWNrZXQtdmtmZXN0LnN0b3JhZ2UueWFuZGV4Y2xvdWQubmV0L2hlYWRsaW5lci1kZXNrdG9wLzVmMDdlY2VmLWRmNzctNDQ2NC1hYWJlLWZmNTE5NGQ4NWMwNSIsImUiOjE3ODMxMTM4MjB9.Bk-YtcloBXM5a7_xKY-iCfCerbq9kWsaEMuR3eQJpvI" }
         ];
 
-        // Линейный порядок прохождения сцен
         const flowSteps = [
-            { date: "18 июля", scene: "Синяя сцена", label: "18 июля • Синяя" },
-            { date: "18 июля", scene: "Белая сцена", label: "18 июля • Белая" },
-            { date: "18 июля", scene: "Фиолетовая сцена", label: "18 июля • Фиолет" },
-            { date: "19 июля", scene: "Синяя сцена", label: "19 июля • Синяя" },
-            { date: "19 июля", scene: "Белая сцена", label: "19 июля • Белая" },
-            { date: "19 июля", scene: "Фиолетовая сцена", label: "19 июля • Фиолет" }
+            { date: "18 июля", scene: "Синяя сцена", label: "18 июля • Синяя", theme: "badge-blue" },
+            { date: "18 июля", scene: "Белая сцена", label: "18 июля • Белая", theme: "badge-white" },
+            { date: "18 июля", scene: "Фиолетовая сцена", label: "18 июля • Фиолет", theme: "badge-purple" },
+            { date: "19 июля", scene: "Синяя сцена", label: "19 июля • Синяя", theme: "badge-blue" },
+            { date: "19 июля", scene: "Белая сцена", label: "19 июля • Белая", theme: "badge-white" },
+            { date: "19 июля", scene: "Фиолетовая сцена", label: "19 июля • Фиолет", theme: "badge-purple" }
         ];
 
         let currentStepIdx = 0;
         let activeArtists = [];
         let currentIdx = 0;
-        const voterHistory = {}; 
+        let voterHistory = {}; 
 
         function initStep() {
-            // Если все шаги пройдены, сразу открываем экран результатов
             if (currentStepIdx >= flowSteps.length) {
                 showResultScreen();
                 return;
@@ -321,19 +382,26 @@
 
             const currentStep = flowSteps[currentStepIdx];
             
-            // Обновляем текст в верхней плашке
-            document.getElementById('status-badge').innerText = currentStep.label;
+            // Настройка текста верхней плашки
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.innerText = currentStep.label;
+            statusBadge.className = `current-badge ${currentStep.theme}`;
 
-            // Вытягиваем артистов для текущего шага
             activeArtists = allArtists.filter(a => a.date === currentStep.date && a.scene === currentStep.scene);
             currentIdx = 0;
 
-            // Показываем кнопку досрочного завершения, если сделан хотя бы один выбор за всё время
             if (Object.keys(voterHistory).length > 0) {
                 document.getElementById('finish-now-btn').style.display = 'block';
             }
 
             renderDeck();
+        }
+
+        function getSceneThemeClass(sceneName) {
+            if (sceneName.includes("Синяя")) return "badge-blue";
+            if (sceneName.includes("Белая")) return "badge-white";
+            if (sceneName.includes("Фиолетовая")) return "badge-purple";
+            return "badge-blue";
         }
 
         function renderDeck() {
@@ -342,9 +410,7 @@
 
             const cardsToRender = activeArtists.slice(currentIdx, currentIdx + 3);
 
-            // Если на этой сцене карточки закончились
             if (cardsToRender.length === 0) {
-                // Переходим к следующему шагу в автоматическом цикле
                 currentStepIdx++;
                 initStep();
                 return;
@@ -353,9 +419,10 @@
             cardsToRender.reverse().forEach((artist) => {
                 const card = document.createElement('div');
                 card.className = 'card';
+                const themeClass = getSceneThemeClass(artist.scene);
                 card.innerHTML = `
                     <div class="card-image" style="background-image: url('${artist.img}')">
-                        <div class="scene-badge">${artist.scene}</div>
+                        <div class="scene-badge ${themeClass}">${artist.scene}</div>
                     </div>
                     <div class="card-info">
                         <h3 class="artist-name">${artist.name}</h3>
@@ -371,6 +438,7 @@
             const topCard = deck.lastElementChild;
             if (!topCard || activeArtists.length === 0 || !activeArtists[currentIdx]) return;
 
+            // Запускаем физическую анимацию Tinder свайпа
             topCard.classList.add(`swipe-${type}`);
             
             const artist = activeArtists[currentIdx];
@@ -382,6 +450,7 @@
             currentIdx++;
             document.getElementById('finish-now-btn').style.display = 'block';
 
+            // Ждем завершения анимации вылета (300мс) перед перерисовкой колоды
             setTimeout(() => {
                 renderDeck();
             }, 300);
@@ -391,7 +460,61 @@
             document.getElementById('deck').style.display = 'none';
             document.getElementById('game-controls').style.display = 'none';
             document.getElementById('header-nav').style.display = 'none';
+            
+            renderVotesEditor();
+            
             document.getElementById('result-stage').style.display = 'block';
+        }
+
+        function renderVotesEditor() {
+            const container = document.getElementById('my-votes-list');
+            container.innerHTML = '';
+
+            const activeVotes = Object.entries(voterHistory).filter(([id, item]) => item.choice === 'yes' || item.choice === 'maybe');
+
+            if (activeVotes.length === 0) {
+                container.innerHTML = '<p style="color:#828282; font-size:12px; text-align:center;">Список «Иду» пуст.</p>';
+                return;
+            }
+
+            activeVotes.forEach(([artistId, item]) => {
+                const badgeColor = item.choice === 'yes' ? 'var(--btn-yes)' : 'var(--btn-maybe)';
+                const badgeText = item.choice === 'yes' ? '🔥 ИДУ' : '🤷‍♂️ 50/50';
+
+                const row = document.createElement('div');
+                row.className = 'edit-item';
+                row.innerHTML = `
+                    <div class="edit-name">${item.name}</div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <span style="font-size:12px; font-weight:bold; color:${badgeColor}; margin-right:4px;">${badgeText}</span>
+                        <button class="mini-btn" onclick="changeOpinion(${artistId})">❌ Сбросить</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        window.changeOpinion = function(artistId) {
+            if (voterHistory[artistId]) {
+                voterHistory[artistId].choice = 'no';
+                renderVotesEditor();
+            }
+        }
+
+        window.resetAllProgress = function() {
+            if (confirm("Очистить текущие выборы и пройти опрос сначала?")) {
+                voterHistory = {};
+                currentStepIdx = 0;
+                currentIdx = 0;
+                
+                document.getElementById('deck').style.display = 'block';
+                document.getElementById('game-controls').style.display = 'block';
+                document.getElementById('header-nav').style.display = 'flex';
+                document.getElementById('result-stage').style.display = 'none';
+                document.getElementById('finish-now-btn').style.display = 'none';
+                
+                initStep();
+            }
         }
 
         function sendDataToBot() {
@@ -401,7 +524,6 @@
                 return;
             }
 
-            // Компактный JSON-формат, который точно не сломает боту память
             const payload = {
                 user_name: name,
                 votes: {}
@@ -413,12 +535,10 @@
                 }
             });
 
-            // Отправляем JSON строкой
             tg.sendData(JSON.stringify(payload));
             tg.close();
         }
 
-        // Самый первый запуск приложения
         initStep();
     </script>
 </body>
